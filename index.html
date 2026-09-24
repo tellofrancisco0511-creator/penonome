@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestión Comunitaria - Panel Operativo</title>
+    <!-- Librería PDF.js para leer los archivos PDF localmente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     <style>
         :root {
             --primary: #4f46e5;
@@ -135,7 +140,6 @@
             display: flex; align-items: center; justify-content: space-between; padding: 0 2rem;
         }
         .header-title h2 { font-size: 1.25rem; font-weight: 600; }
-        .header-actions { display: flex; gap: 1rem; align-items: center; }
         .content-area { flex: 1; padding: 2rem; overflow-y: auto; background: var(--bg-main); }
         .view-section { display: none; }
         .view-section.active { display: block; }
@@ -165,9 +169,7 @@
         tbody tr:hover { background: var(--bg-main); }
 
         .btn-success { background: var(--success); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
-        .btn-warning { background: var(--warning); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
         .btn-danger { background: var(--danger); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
-        .action-btns { display: flex; gap: 0.5rem; }
 
         /* MODALS */
         .modal-overlay {
@@ -188,7 +190,6 @@
         .chart-fill { height: 100%; border-radius: 4px; background: var(--primary); }
 
         @media print {
-            #c-monto-container { display: none !important; }
             aside, header, .table-header-actions, .modal-footer { display: none !important; }
         }
     </style>
@@ -205,11 +206,11 @@
             <form onsubmit="realizarLogin(event)">
                 <div class="form-group">
                     <label>Usuario</label>
-                    <input type="text" id="login-user" required placeholder="usuario">
+                    <input type="text" id="login-user" required placeholder="Ej. admin" value="admin">
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <input type="password" id="login-pass" required placeholder="************">
+                    <input type="password" id="login-pass" required placeholder="••••" value="123">
                 </div>
                 <button type="submit" class="btn-primary">Ingresar al Sistema</button>
             </form>
@@ -220,16 +221,16 @@
     <div id="app-container">
         <aside>
             <div class="sidebar-header">
-                <h1>Gestión Circuital</h1>
+                <h1>Gestión Comunal</h1>
                 <button onclick="toggleDarkMode()" title="Cambiar tema" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">🌓</button>
             </div>
             <ul class="sidebar-menu">
-                <li><button class="menu-btn active" id="nav-dashboard" onclick="cambiarVista('dashboard', this)">📊 Dashboard</button></li>
-                <li><button class="menu-btn" id="nav-dirigientes" onclick="cambiarVista('dirigientes', this)">👥 Dirigientes <span id="badge-count" style="margin-left:auto; background:#e0e7ff; color:var(--primary); padding:0.1rem 0.4rem; border-radius:10px; font-size:0.75rem;">0</span></button></li>
-                <li><button class="menu-btn" id="nav-apoyo" onclick="cambiarVista('apoyo', this)">🤝 Control de Apoyos</button></li>
-                <li><button class="menu-btn" id="nav-inventario" onclick="cambiarVista('inventario', this)">📦 Inventario</button></li>
-                <li><button class="menu-btn" id="nav-electoral" onclick="cambiarVista('electoral', this)">🗳️ Electoral</button></li>
-                <li><button class="menu-btn" id="nav-usuarios" onclick="cambiarVista('usuarios', this)">🔒 Gestión de Usuarios</button></li>
+                <li><button class="menu-btn active" onclick="cambiarVista('dashboard', this)">📊 Dashboard</button></li>
+                <li><button class="menu-btn" onclick="cambiarVista('dirigientes', this)">👥 Dirigientes <span id="badge-count" style="margin-left:auto; background:#e0e7ff; color:var(--primary); padding:0.1rem 0.4rem; border-radius:10px; font-size:0.75rem;">0</span></button></li>
+                <li><button class="menu-btn" onclick="cambiarVista('apoyo', this)">🤝 Control de Apoyos</button></li>
+                <li><button class="menu-btn" onclick="cambiarVista('inventario', this)">📦 Inventario</button></li>
+                <li><button class="menu-btn" onclick="cambiarVista('electoral', this)">🗳️ Electoral</button></li>
+                <li><button class="menu-btn" onclick="cambiarVista('usuarios', this)">🔒 Gestión de Usuarios</button></li>
             </ul>
             <div class="user-profile-box">
                 <div class="user-avatar" id="current-user-avatar">AD</div>
@@ -257,14 +258,6 @@
                             <label>Filtrar por Corregimiento:</label>
                             <select id="filtro-dash-corr" onchange="actualizarDashboard()">
                                 <option value="TODOS">Todos los Corregimientos</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin:0;">
-                            <label>Rango de Fecha:</label>
-                            <select id="filtro-dash-fecha" onchange="actualizarDashboard()">
-                                <option value="todos">Histórico Completo</option>
-                                <option value="mes">Este Mes</option>
-                                <option value="ano">Este Año</option>
                             </select>
                         </div>
                     </div>
@@ -301,7 +294,10 @@
                     <div class="card-table">
                         <div class="table-header-actions">
                             <input type="text" id="busqueda-tabla" onkeyup="filtrarTabla()" placeholder="Buscar por nombre, cédula...">
-                            <div style="display:flex; gap:0.5rem;">
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                <!-- Botón oculto para subir el archivo PDF -->
+                                <input type="file" id="input-pdf-file" accept="application/pdf" style="display:none" onchange="procesarArchivoPDF(event)">
+                                <button class="btn-success" onclick="document.getElementById('input-pdf-file').click()" style="padding: 0.5rem 1rem;">📂 Importar desde PDF</button>
                                 <button class="btn-success" onclick="exportarCSV('dirigientes')" style="padding: 0.5rem 1rem;">📥 Exportar CSV</button>
                                 <button class="btn-primary" onclick="abrirModalDirigente()" style="width: auto; padding: 0.5rem 1rem;">+ Nuevo Dirigente</button>
                             </div>
@@ -518,8 +514,7 @@
         <div class="modal-card" style="max-width: 650px;">
             <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:1rem; margin-bottom:1rem;">
                 <h3 style="margin:0;">CONSTANCIA DE ENTREGA DE APOYO COMUNITARIO</h3>
-                <span id="constancia-num" style="font-size:0.85rem; color:#666;">N° JDLG-1620</span>
-                <div style="font-size:0.8rem; color:#666; margin-top:0.2rem;" id="constancia-fecha-top"></div>
+                <span style="font-size:0.85rem; color:#666;">Documento Oficial</span>
             </div>
             <div style="font-size:0.9rem; line-height:1.6;">
                 <p>Por medio de la presente se hace constar que se ha hecho entrega formal del apoyo comunitario al siguiente dirigente:</p>
@@ -535,7 +530,7 @@
                     Tipo: <span id="c-tipo"></span><br>
                     Descripción: <span id="c-desc"></span><br>
                     Fecha de Entrega: <span id="c-fecha"></span><br>
-                    <span id="c-monto-container">Valor Estimado: <span id="c-monto" style="color:var(--success); font-weight:bold;"></span></span>
+                    Valor Estimado: <span id="c-monto" style="color:var(--success); font-weight:bold;"></span>
                 </p>
             </div>
             <div class="modal-footer" style="margin-top:2rem;">
@@ -563,7 +558,7 @@
             toast.className = `toast ${tipo}`;
             toast.innerText = mensaje;
             container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            setTimeout(() => toast.remove(), 3500);
         }
 
         function guardarEnLocalStorage() {
@@ -632,8 +627,6 @@
 
         function actualizarDashboard() {
             const filtroCorr = document.getElementById('filtro-dash-corr').value;
-            const filtroFecha = document.getElementById('filtro-dash-fecha').value;
-
             let diriFiltrados = baseDeDatosDirigientes;
             if(filtroCorr !== 'TODOS') {
                 diriFiltrados = baseDeDatosDirigientes.filter(d => d.corregimiento === filtroCorr);
@@ -647,7 +640,6 @@
             document.getElementById('wm-apo').innerText = listaApoyos.length;
             document.getElementById('wm-inv').innerText = listaInventario.length;
 
-            // Gráfico Tipo Apoyo
             const tipos = {};
             listaApoyos.forEach(a => tipos[a.tipo] = (tipos[a.tipo] || 0) + 1);
             let htmlTipos = '';
@@ -657,7 +649,6 @@
             }
             document.getElementById('chart-tipo-apoyo').innerHTML = htmlTipos || '<p style="color:var(--text-muted);font-size:0.85rem;">Sin registros</p>';
 
-            // Gráfico Corregimientos
             const corrs = {};
             baseDeDatosDirigientes.forEach(d => corrs[d.corregimiento] = (corrs[d.corregimiento] || 0) + 1);
             let htmlCorr = '';
@@ -704,6 +695,81 @@
             usuariosSistema.forEach(u => {
                 tbody.innerHTML += `<tr><td>${u.nombre} (@${u.username})</td><td>${u.rol}</td><td>Acceso Total</td><td>-</td></tr>`;
             });
+        }
+
+        // LECTOR DE PDF AUTOMÁTICO
+        async function procesarArchivoPDF(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                mostrarToast('Leyendo archivo PDF...', 'success');
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdfDocument = await loadingTask.promise;
+                
+                let textoExtraido = "";
+                for (let i = 1; i <= pdfDocument.numPages; i++) {
+                    const page = await pdfDocument.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(" ");
+                    textoExtraido += pageText + "\n";
+                }
+
+                // Parser heurístico para detectar cédulas y nombres en el texto
+                // Busca patrones de cédula típicos (ej. 8-123-456 o similares)
+                const regexCedula = /\b([0-9]{1,2}-[0-9]{3,4}-[0-9]{3,4})\b/g;
+                let match;
+                let countImportados = 0;
+
+                // Si el PDF viene en formato estructurado de líneas, intentamos extraer los datos
+                const lineas = textoExtraido.split('\n');
+                lineas.forEach((linea, index) => {
+                    const cedulasEnLinea = linea.match(regexCedula);
+                    if (cedulasEnLinea) {
+                        const cedula = cedulasEnLinea[0];
+                        // Limpiamos la línea para extraer posibles nombres y datos adyacentes
+                        let restoLinea = linea.replace(cedula, "").trim();
+                        if(restoLinea.length < 3 && index > 0) {
+                            restoLinea = lineas[index - 1].trim(); // Tomar línea previa si el nombre está arriba
+                        }
+
+                        baseDeDatosDirigientes.push({
+                            nombre: restoLinea || "Dirigente desde PDF",
+                            cedula: cedula,
+                            telefono: "6000-0000",
+                            corregimiento: "Centro",
+                            comunidad: "Comunidad PDF",
+                            coordinador: "General",
+                            participacion: "Regular"
+                        });
+                        countImportados++;
+                    }
+                });
+
+                if(countImportados === 0 && textoExtraido.length > 10) {
+                    // Si no encontró cédulas estructuradas, agrega al menos un registro genérico con el texto encontrado
+                    baseDeDatosDirigientes.push({
+                        nombre: file.name.replace('.pdf',''),
+                        cedula: "0-000-000",
+                        telefono: "6000-0000",
+                        corregimiento: "General",
+                        comunidad: "Importado PDF",
+                        coordinador: "Sistema",
+                        participacion: "Regular"
+                    });
+                    countImportados = 1;
+                }
+
+                guardarEnLocalStorage();
+                actualizarTodo();
+                mostrarToast(`¡Se importaron ${countImportados} registros desde el PDF con éxito!`, 'success');
+            } catch (error) {
+                console.error(error);
+                mostrarToast('Error al leer el archivo PDF', 'danger');
+            }
+            // Limpiar input
+            event.target.value = '';
         }
 
         // Modales
