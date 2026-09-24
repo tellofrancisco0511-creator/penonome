@@ -2,16 +2,1177 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Gestión</title>
-    <!-- Tus estilos CSS aquí -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión Comunitaria - Panel Operativo</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LOGIN SCREEN */
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-card {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-card h2 {
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .login-card p {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        /* APP CONTAINER */
+        #app-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            display: none; /* Se activa por JS */
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .menu-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:hover, .menu-btn.active {
+            background: #e0e7ff;
+            color: var(--primary);
+        }
+
+        .user-profile-box {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: #f8fafc;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .user-info h4 {
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        .user-info span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* MAIN CONTENT */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            height: 70px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .header-title h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background: var(--bg-main);
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* CARDS & METRICS */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .metric-card span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .metric-card h3 {
+            font-size: 1.8rem;
+            margin-top: 0.5rem;
+            color: var(--text-main);
+        }
+
+        /* TABLES */
+        .card-table {
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .table-header-actions {
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+
+        .table-header-actions input {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 300px;
+            outline: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        /* BUTTONS GENERAL */
+        .btn-success { background: var(--success); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .btn-warning { background: var(--warning); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .btn-danger { background: var(--danger); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+
+        .action-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .modal-card h3 {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* CHARTS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .chart-box {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-box h4 {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .chart-row {
+            margin-bottom: 0.75rem;
+        }
+
+        .chart-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .chart-track {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .chart-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Todo el diseño HTML de tu interfaz aquí -->
 
-    <!-- AQUÍ EMPIEZA EL SCRIPT -->
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>Acceso al Sistema</h2>
+            <p>Gestión de Dirigientes y Operativa Comunitaria</p>
+            <form onsubmit="realizarLogin(event)">
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <input type="text" id="login-user" required placeholder="Ej. admin">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-pass" required placeholder="••••">
+                </div>
+                <button type="submit" class="btn-primary">Ingresar al Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL DEL APLICATIVO -->
+    <div id="app-container" style="display: none;">
+        <!-- BARRA LATERAL -->
+        <aside>
+            <div class="sidebar-header">
+                <h1>Gestión Comunal</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><button class="menu-btn active" id="nav-dashboard" onclick="cambiarVista('dashboard', this)">📊 Dashboard</button></li>
+                <li><button class="menu-btn" id="nav-dirigientes" onclick="cambiarVista('dirigientes', this)">👥 Dirigientes <span id="badge-count" style="margin-left:auto; background:#e0e7ff; color:var(--primary); padding:0.1rem 0.4rem; border-radius:10px; font-size:0.75rem;">0</span></button></li>
+                <li><button class="menu-btn" id="nav-apoyo" onclick="cambiarVista('apoyo', this)">🤝 Control de Apoyos</button></li>
+                <li><button class="menu-btn" id="nav-inventario" onclick="cambiarVista('inventario', this)">📦 Inventario</button></li>
+                <li><button class="menu-btn" id="nav-electoral" onclick="cambiarVista('electoral', this)">🗳️ Electoral</button></li>
+                <li><button class="menu-btn" id="nav-usuarios" onclick="cambiarVista('usuarios', this)">🔒 Gestión de Usuarios</button></li>
+            </ul>
+            <div class="user-profile-box">
+                <div class="user-avatar" id="current-user-avatar">AD</div>
+                <div class="user-info">
+                    <h4 id="current-user-name">Administrador</h4>
+                    <span id="current-user-role">Administrador</span>
+                </div>
+                <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar sesión">⏻</button>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main>
+            <header>
+                <div class="header-title">
+                    <h2 id="view-title">Panel General</h2>
+                </div>
+            </header>
+
+            <div class="content-area">
+                
+                <!-- VISTA DASHBOARD -->
+                <section id="view-dashboard" class="view-section active">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <span>Total Dirigientes</span>
+                            <h3 id="total-dirigientes">0</h3>
+                        </div>
+                        <div class="metric-card">
+                            <span>Apoyos Entregados</span>
+                            <h3 id="total-apoyos-metric">0</h3>
+                        </div>
+                        <div class="metric-card">
+                            <span>Ítems en Inventario</span>
+                            <h3 id="total-inventario-metric">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-box">
+                            <h4>Distribución por Tipo de Apoyo</h4>
+                            <div id="chart-tipo-apoyo"></div>
+                        </div>
+                        <div class="chart-box">
+                            <h4>Dirigentes por Corregimiento</h4>
+                            <div id="chart-corregimientos"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VISTA DIRIGENTES -->
+                <section id="view-dirigientes" class="view-section">
+                    <div class="card-table">
+                        <div class="table-header-actions">
+                            <input type="text" id="busqueda-tabla" onkeyup="filtrarTabla()" placeholder="Buscar por nombre, cédula o corregimiento...">
+                            <button class="btn-primary" id="btn-add-dirigente" onclick="abrirModalDirigente()" style="width: auto; padding: 0.5rem 1rem;">+ Nuevo Dirigente</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre Completo</th>
+                                    <th>Cédula</th>
+                                    <th>Teléfono</th>
+                                    <th>Corregimiento</th>
+                                    <th>Comunidad</th>
+                                    <th>Coordinador</th>
+                                    <th>Participación</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-cuerpo"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- VISTA APOYOS -->
+                <section id="view-apoyo" class="view-section">
+                    <div class="card-table">
+                        <div class="table-header-actions">
+                            <h3>Historial de Apoyos y Entregas</h3>
+                            <button class="btn-primary" id="btn-add-apoyo" onclick="abrirModalApoyo()" style="width: auto; padding: 0.5rem 1rem;">+ Registrar Apoyo</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Dirigente / Cédula</th>
+                                    <th>Tipo de Apoyo</th>
+                                    <th>Descripción</th>
+                                    <th>Monto Estimado</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-apoyos-cuerpo"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- VISTA INVENTARIO -->
+                <section id="view-inventario" class="view-section">
+                    <div class="card-table">
+                        <div class="table-header-actions">
+                            <input type="text" id="busqueda-inventario" onkeyup="filtrarInventario()" placeholder="Buscar artículo en stock...">
+                            <button class="btn-primary" id="btn-add-inventario" onclick="abrirModalInventario()" style="width: auto; padding: 0.5rem 1rem;">+ Nuevo Artículo</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre del Artículo</th>
+                                    <th>Categoría</th>
+                                    <th>Cantidad Disponible</th>
+                                    <th>Ubicación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-inventario-cuerpo"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- VISTA ELECTORAL -->
+                <section id="view-electoral" class="view-section">
+                    <div class="card-table" style="padding: 2rem;">
+                        <h3>Módulo Electoral y Estadísticas</h3>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">Visualización de cobertura territorial y estructura operativa.</p>
+                        <div class="metrics-grid" style="margin-top: 1.5rem;">
+                            <div class="metric-card">
+                                <span>Total Registrados en Base</span>
+                                <h3 id="wm-tot">0</h3>
+                            </div>
+                            <div class="metric-card">
+                                <span>Apoyos Registrados</span>
+                                <h3 id="wm-apo">0</h3>
+                            </div>
+                            <div class="metric-card">
+                                <span>Stock Activo</span>
+                                <h3 id="wm-inv">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VISTA USUARIOS -->
+                <section id="view-usuarios" class="view-section">
+                    <div class="card-table">
+                        <div class="table-header-actions">
+                            <h3>Gestión de Usuarios y Permisos</h3>
+                            <button class="btn-primary" onclick="abrirModalUsuario()" style="width: auto; padding: 0.5rem 1rem;">+ Crear Usuario</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre y Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Permisos Asignados</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-usuarios-cuerpo"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL NUEVO DIRIGENTE -->
+    <div class="modal-overlay" id="modal-dirigente">
+        <div class="modal-card">
+            <h3>Registrar Nuevo Dirigente</h3>
+            <form onsubmit="guardarDirigente(event)">
+                <div class="form-group"><label>Nombre Completo</label><input type="text" id="dir-nombre" required></div>
+                <div class="form-group"><label>Cédula</label><input type="text" id="dir-cedula" required></div>
+                <div class="form-group"><label>Teléfono</label><input type="text" id="dir-tel" required></div>
+                <div class="form-group"><label>Corregimiento</label><input type="text" id="dir-corr" required></div>
+                <div class="form-group"><label>Comunidad</label><input type="text" id="dir-com" required></div>
+                <div class="form-group"><label>Coordinador</label><input type="text" id="dir-coord" required></div>
+                <div class="form-group">
+                    <label>Participación</label>
+                    <select id="dir-part">
+                        <option value="Buena">Buena</option>
+                        <option value="Regular" selected>Regular</option>
+                        <option value="Mala">Mala</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger" onclick="cerrarModalDirigente()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="width:auto;">Guardar Dirigente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO APOYO -->
+    <div class="modal-overlay" id="modal-apoyo">
+        <div class="modal-card">
+            <h3>Registrar Apoyo o Entrega</h3>
+            <form onsubmit="guardarApoyo(event)">
+                <div class="form-group">
+                    <label>Dirigente Beneficiario</label>
+                    <select id="select-dirigente" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Apoyo</label>
+                    <select id="select-tipo" required>
+                        <option value="ECONOMICO">ECONOMICO</option>
+                        <option value="ALIMENTICIO">ALIMENTICIO</option>
+                        <option value="DEPORTIVO">DEPORTIVO</option>
+                        <option value="OTRO">OTRO</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Descripción del Apoyo</label><input type="text" id="input-desc" required placeholder="Ej. 2 Bolsas de Arroz"></div>
+                <div class="form-group"><label>Monto Estimado ($)</label><input type="text" id="input-monto" required placeholder="Ej. $16.00"></div>
+                <div class="form-group"><label>Fecha</label><input type="date" id="input-fecha" required></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger" onclick="cerrarModalApoyo()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="width:auto;">Guardar Apoyo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO ARTÍCULO INVENTARIO -->
+    <div class="modal-overlay" id="modal-inventario">
+        <div class="modal-card">
+            <h3>Registrar Artículo en Inventario</h3>
+            <form onsubmit="guardarInventarioItem(event)">
+                <div class="form-group"><label>Nombre del Artículo</label><input type="text" id="inv-nombre" required></div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="inv-categoria" required>
+                        <option value="Alimentos">Alimentos</option>
+                        <option value="Deportes">Deportes</option>
+                        <option value="Textil / Promocional">Textil / Promocional</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Cantidad Inicial</label><input type="number" id="inv-cantidad" required min="1"></div>
+                <div class="form-group"><label>Ubicación en Bodega</label><input type="text" id="inv-ubicacion" required placeholder="Ej. Estante 1 - Caja 2"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger" onclick="cerrarModalInventario()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="width:auto;">Guardar Artículo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO USUARIO -->
+    <div class="modal-overlay" id="modal-usuario">
+        <div class="modal-card" style="max-width: 600px;">
+            <h3>Crear Nuevo Usuario y Permisos</h3>
+            <form onsubmit="guardarUsuario(event)">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group"><label>Nombre y Apellido</label><input type="text" id="usr-nombre" required></div>
+                    <div class="form-group"><label>Nombre de Usuario</label><input type="text" id="usr-username" required></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group"><label>Contraseña</label><input type="password" id="usr-password" required></div>
+                    <div class="form-group">
+                        <label>Rol Principal</label>
+                        <select id="usr-rol" onchange="actualizarPermisosPreset()">
+                            <option value="Gestor">Gestor</option>
+                            <option value="Consultor">Consultor</option>
+                            <option value="Administrador">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:1rem;">
+                    <label style="margin-bottom:0.75rem;">Permisos Específicos del Sistema:</label>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; font-size:0.85rem;">
+                        <label><input type="checkbox" id="perm-dashboard" checked> Ver Dashboard</label>
+                        <label><input type="checkbox" id="perm-dirigientes" checked> Ver Dirigientes</label>
+                        <label><input type="checkbox" id="perm-apoyos" checked> Ver Apoyos</label>
+                        <label><input type="checkbox" id="perm-inventario" checked> Ver Inventario</label>
+                        <label><input type="checkbox" id="perm-electoral" checked> Ver Módulo Electoral</label>
+                        <label><input type="checkbox" id="perm-crear-dir" checked> Registrar Dirigentes</label>
+                        <label><input type="checkbox" id="perm-crear-apo" checked> Registrar Apoyos</label>
+                        <label><input type="checkbox" id="perm-crear-inv" checked> Gestionar Inventario</label>
+                        <label><input type="checkbox" id="perm-usuarios"> Gestionar Usuarios</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger" onclick="cerrarModalUsuario()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="width:auto;">Crear Usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CONSTANCIA -->
+    <div class="modal-overlay" id="modal-constancia">
+        <div class="modal-card" style="max-width: 650px;">
+            <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:1rem; margin-bottom:1rem;">
+                <h3 style="margin:0;">CONSTANCIA DE ENTREGA DE APOYO COMUNITARIO</h3>
+                <span id="constancia-num" style="font-size:0.85rem; color:#666;">N° JDLG-1620</span>
+                <div style="font-size:0.8rem; color:#666; margin-top:0.2rem;" id="constancia-fecha-top"></div>
+            </div>
+            <div style="font-size:0.9rem; line-height:1.6;">
+                <p>Por medio de la presente se hace constar que se ha hecho entrega formal del apoyo comunitario al siguiente dirigente:</p>
+                <ul style="list-style:none; margin:1rem 0; padding:1rem; background:#f8fafc; border-radius:6px;">
+                    <li><strong>Nombre:</strong> <span id="c-nombre"></span></li>
+                    <li><strong>Cédula:</strong> <span id="c-cedula"></span></li>
+                    <li><strong>Teléfono:</strong> <span id="c-tel"></span></li>
+                    <li><strong>Corregimiento / Comunidad:</strong> <span id="c-corr"></span> - <span id="c-com"></span></li>
+                    <li><strong>Coordinador:</strong> <span id="c-coord"></span></li>
+                </ul>
+                <p><strong>Detalle del Apoyo:</strong></p>
+                <p style="background:#fff; border:1px solid var(--border); padding:0.75rem; border-radius:6px; margin-top:0.5rem;">
+                    Tipo: <span id="c-tipo"></span><br>
+                    Descripción: <span id="c-desc"></span><br>
+                    Fecha de Entrega: <span id="c-fecha"></span><br>
+                    Valor Estimado: <span id="c-monto" style="color:var(--success); font-weight:bold;"></span>
+                </p>
+            </div>
+            <div style="margin-top:2rem; display:flex; justify-content:space-between; text-align:center; font-size:0.85rem;">
+                <div><div style="border-bottom:1px solid #333; width:180px; margin-bottom:0.3rem; height:30px;"></div>Entregado por / Operativa</div>
+                <div><div style="border-bottom:1px solid #333; width:180px; margin-bottom:0.3rem; height:30px;" id="sig-nombre"></div>Recibido Conforme<br><span id="sig-cedula" style="font-size:0.75rem; color:#666;"></span></div>
+            </div>
+            <div class="modal-footer" style="margin-top:2rem;">
+                <button type="button" class="btn-primary" onclick="window.print()" style="width:auto;">🖨️ Imprimir Constancia</button>
+                <button type="button" class="btn-danger" onclick="cerrarConstancia()" style="width:auto;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE CONEXIÓN CON EL BACKEND DE RENDER -->
     <script>
         let usuariosSistema = [];
-        // ... (todo el código JavaScript que te pasé antes va aquí dentro)
+        let listaInventario = [];
+        let listaApoyos = [];
+        let baseDeDatosDirigientes = [];
+        let usuarioActual = null;
+
+        async function cargarDatosServidor() {
+            try {
+                let response = await fetch('/api/data');
+                let data = await response.json();
+                usuariosSistema = data.usuarios;
+                listaInventario = data.inventario;
+                listaApoyos = data.apoyos;
+                baseDeDatosDirigientes = data.dirigientes;
+            } catch (error) {
+                console.error("Error al cargar datos del servidor", error);
+            }
+        }
+
+        async function guardarTodoEnStorage() {
+            try {
+                await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuarios: usuariosSistema,
+                        inventario: listaInventario,
+                        apoyos: listaApoyos,
+                        dirigientes: baseDeDatosDirigientes
+                    })
+                });
+            } catch (error) {
+                console.error("Error al guardar en el servidor", error);
+            }
+        }
+
+        window.onload = async function() {
+            await cargarDatosServidor();
+        };
+
+        async function realizarLogin(e) {
+            e.preventDefault();
+            await cargarDatosServidor();
+            const uInput = document.getElementById('login-user').value.trim();
+            const pInput = document.getElementById('login-pass').value.trim();
+
+            let userFound = usuariosSistema.find(u => u.username === uInput && u.password === pInput);
+
+            if (userFound) {
+                usuarioActual = userFound;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                
+                aplicarPermisosEnInterfaz();
+
+                renderizarTablaDirigientes(baseDeDatosDirigientes);
+                renderizarTablaApoyos(listaApoyos);
+                renderizarTablaInventario(listaInventario);
+                renderizarTablaUsuarios();
+                llenarSelectDirigientes();
+                actualizarGraficas();
+                document.getElementById('input-fecha').valueAsDate = new Date();
+            } else {
+                alert('Usuario o contraseña incorrectos.');
+            }
+        }
+
+        function aplicarPermisosEnInterfaz() {
+            document.getElementById('current-user-name').innerText = usuarioActual.nombre;
+            document.getElementById('current-user-role').innerText = usuarioActual.rol;
+            document.getElementById('current-user-avatar').innerText = usuarioActual.nombre.substring(0, 2).toUpperCase();
+
+            document.getElementById('nav-dashboard').style.display = usuarioActual.permisos.dashboard ? 'flex' : 'none';
+            document.getElementById('nav-dirigientes').style.display = usuarioActual.permisos.dirigientes ? 'flex' : 'none';
+            document.getElementById('nav-apoyo').style.display = usuarioActual.permisos.apoyos ? 'flex' : 'none';
+            document.getElementById('nav-inventario').style.display = usuarioActual.permisos.inventario ? 'flex' : 'none';
+            document.getElementById('nav-electoral').style.display = usuarioActual.permisos.electoral ? 'flex' : 'none';
+            document.getElementById('nav-usuarios').style.display = usuarioActual.permisos.usuarios ? 'flex' : 'none';
+
+            document.getElementById('btn-add-dirigente').style.display = usuarioActual.permisos.crearDir ? 'inline-block' : 'none';
+            document.getElementById('btn-add-apoyo').style.display = usuarioActual.permisos.crearApo ? 'inline-block' : 'none';
+            document.getElementById('btn-add-inventario').style.display = usuarioActual.permisos.crearInv ? 'inline-block' : 'none';
+
+            if (usuarioActual.permisos.dashboard) cambiarVista('dashboard', document.getElementById('nav-dashboard'));
+            else if (usuarioActual.permisos.dirigientes) cambiarVista('dirigientes', document.getElementById('nav-dirigientes'));
+            else if (usuarioActual.permisos.inventario) cambiarVista('inventario', document.getElementById('nav-inventario'));
+        }
+
+        function cerrarSesion() {
+            if (confirm('¿Desea cerrar sesión?')) {
+                document.getElementById('app-container').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('login-user').value = '';
+                document.getElementById('login-pass').value = '';
+                usuarioActual = null;
+            }
+        }
+
+        function renderizarTablaDirigientes(datos) {
+            const tbody = document.getElementById('tabla-cuerpo');
+            tbody.innerHTML = '';
+            document.getElementById('total-dirigientes').innerText = baseDeDatosDirigientes.length;
+            document.getElementById('wm-tot').innerText = baseDeDatosDirigientes.length;
+            document.getElementById('badge-count').innerText = baseDeDatosDirigientes.length;
+
+            datos.forEach(reg => {
+                const tr = document.createElement('tr');
+                let colorBadge = reg.part === 'Buena' ? '#10b981' : (reg.part === 'Mala' ? '#ef4444' : '#f59e0b');
+                tr.innerHTML = `
+                    <td>${reg.id}</td>
+                    <td style="font-weight: 600;">${reg.nombre}</td>
+                    <td>${reg.cedula}</td>
+                    <td>${reg.tel}</td>
+                    <td>${reg.corr}</td>
+                    <td>${reg.com}</td>
+                    <td>${reg.coord}</td>
+                    <td><span style="color: ${colorBadge}; font-weight: 600;">● ${reg.part}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            actualizarGraficas();
+        }
+
+        function renderizarTablaApoyos(datos) {
+            const tbody = document.getElementById('tabla-apoyos-cuerpo');
+            tbody.innerHTML = '';
+            document.getElementById('total-apoyos-metric').innerText = listaApoyos.length;
+            document.getElementById('wm-apo').innerText = listaApoyos.length;
+
+            datos.forEach((ap, idx) => {
+                const tr = document.createElement('tr');
+                let botonesAccion = `<button class="btn-success" onclick="abrirConstancia(${idx})">📄 Constancia</button>`;
+                if (usuarioActual && usuarioActual.permisos.crearApo) {
+                    botonesAccion += `
+                        <button class="btn-danger" onclick="eliminarApoyo(${idx})">🗑️</button>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td><strong>${ap.dirigente}</strong><br><span style="font-size: 0.7rem; color: var(--text-muted);">Cédula: ${ap.cedula}</span></td>
+                    <td><span style="background: #e0e7ff; color: var(--primary); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${ap.tipo}</span></td>
+                    <td>${ap.desc}</td>
+                    <td style="font-weight: 600; color: var(--success);">${ap.monto}</td>
+                    <td>${ap.fecha}</td>
+                    <td><div class="action-btns">${botonesAccion}</div></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            actualizarGraficas();
+        }
+
+        function renderizarTablaInventario(datos) {
+            const tbody = document.getElementById('tabla-inventario-cuerpo');
+            tbody.innerHTML = '';
+            document.getElementById('total-inventario-metric').innerText = listaInventario.length;
+            document.getElementById('wm-inv').innerText = listaInventario.length;
+
+            datos.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                let colorStock = item.cantidad < 10 ? '#ef4444' : '#10b981';
+                
+                let botonesAccion = '';
+                if (usuarioActual && usuarioActual.permisos.crearInv) {
+                    botonesAccion = `<button class="btn-danger" onclick="eliminarInventarioItem(${idx})">🗑️</button>`;
+                } else {
+                    botonesAccion = `<span style="font-size: 0.75rem; color: var(--text-muted);">Solo lectura</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td><code style="background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem;">${item.codigo}</code></td>
+                    <td><strong>${item.nombre}</strong></td>
+                    <td><span style="background: #f1f5f9; color: var(--text-muted); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${item.categoria}</span></td>
+                    <td style="font-weight: 700; color: ${colorStock}; font-size: 1rem;">${item.cantidad} unidades</td>
+                    <td style="color: var(--text-muted);">${item.ubicacion}</td>
+                    <td><div class="action-btns">${botonesAccion}</div></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function abrirModalInventario() {
+            if(!usuarioActual.permisos.crearInv) return alert('No tiene permisos para agregar artículos.');
+            document.getElementById('modal-inventario').style.display = 'flex';
+        }
+        function cerrarModalInventario() { document.getElementById('modal-inventario').style.display = 'none'; }
+
+        async function guardarInventarioItem(e) {
+            e.preventDefault();
+            listaInventario.unshift({
+                codigo: `INV-00${listaInventario.length + 1}`,
+                nombre: document.getElementById('inv-nombre').value.trim(),
+                categoria: document.getElementById('inv-categoria').value,
+                cantidad: parseInt(document.getElementById('inv-cantidad').value),
+                ubicacion: document.getElementById('inv-ubicacion').value.trim()
+            });
+            await guardarTodoEnStorage();
+            renderizarTablaInventario(listaInventario);
+            cerrarModalInventario();
+            document.getElementById('inv-nombre').value = '';
+            document.getElementById('inv-cantidad').value = '';
+            document.getElementById('inv-ubicacion').value = '';
+            alert('¡Artículo registrado con éxito!');
+        }
+
+        async function eliminarInventarioItem(idx) {
+            if(confirm('¿Eliminar artículo?')) {
+                listaInventario.splice(idx, 1);
+                await guardarTodoEnStorage();
+                renderizarTablaInventario(listaInventario);
+            }
+        }
+
+        function filtrarInventario() {
+            let q = document.getElementById('busqueda-inventario').value.toLowerCase();
+            renderizarTablaInventario(listaInventario.filter(i => i.nombre.toLowerCase().includes(q) || i.categoria.toLowerCase().includes(q)));
+        }
+
+        function renderizarTablaUsuarios() {
+            const tbody = document.getElementById('tabla-usuarios-cuerpo');
+            tbody.innerHTML = '';
+            usuariosSistema.forEach((u, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${u.nombre}</strong><br><span style="font-size: 0.75rem; color: var(--text-muted);">Usuario: ${u.username}</span></td>
+                    <td><span style="background: rgba(99, 102, 241, 0.15); color: var(--primary); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600;">${u.rol}</span></td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">Configurado</td>
+                    <td><button class="btn-danger" onclick="eliminarUsuario(${idx})" ${u.username === 'admin' ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>🗑️</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function actualizarPermisosPreset() {
+            const rol = document.getElementById('usr-rol').value;
+            const checks = document.querySelectorAll('#modal-usuario input[type="checkbox"]');
+            checks.forEach(c => c.checked = (rol === 'Administrador' || rol === 'Gestor'));
+        }
+
+        function abrirModalUsuario() { document.getElementById('modal-usuario').style.display = 'flex'; }
+        function cerrarModalUsuario() { document.getElementById('modal-usuario').style.display = 'none'; }
+
+        async function guardarUsuario(e) {
+            e.preventDefault();
+            usuariosSistema.push({
+                username: document.getElementById('usr-username').value.trim(),
+                password: document.getElementById('usr-password').value.trim(),
+                nombre: document.getElementById('usr-nombre').value.trim(),
+                rol: document.getElementById('usr-rol').value,
+                permisos: {
+                    dashboard: document.getElementById('perm-dashboard').checked,
+                    dirigientes: document.getElementById('perm-dirigientes').checked,
+                    apoyos: document.getElementById('perm-apoyos').checked,
+                    inventario: document.getElementById('perm-inventario').checked,
+                    electoral: document.getElementById('perm-electoral').checked,
+                    crearDir: document.getElementById('perm-crear-dir').checked,
+                    crearApo: document.getElementById('perm-crear-apo').checked,
+                    crearInv: document.getElementById('perm-crear-inv').checked,
+                    usuarios: document.getElementById('perm-usuarios').checked
+                }
+            });
+            await guardarTodoEnStorage();
+            renderizarTablaUsuarios();
+            cerrarModalUsuario();
+            alert('¡Usuario creado con éxito!');
+        }
+
+        async function eliminarUsuario(idx) {
+            if (usuariosSistema[idx].username === 'admin') return alert('No se puede eliminar al administrador principal.');
+            if (confirm('¿Eliminar usuario?')) {
+                usuariosSistema.splice(idx, 1);
+                await guardarTodoEnStorage();
+                renderizarTablaUsuarios();
+            }
+        }
+
+        function abrirConstancia(idx) {
+            let ap = listaApoyos[idx];
+            let dInfo = baseDeDatosDirigientes.find(d => d.cedula === ap.cedula) || { tel: "68564977", corr: "Pajonal", com: "Sofre Centro", coord: ap.dirigente };
+            document.getElementById('constancia-num').innerText = `N° JDLG-${1620 + idx}`;
+            document.getElementById('constancia-fecha-top').innerText = new Date().toLocaleDateString('es-ES');
+            document.getElementById('c-nombre').innerText = ap.dirigente;
+            document.getElementById('c-cedula').innerText = ap.cedula;
+            document.getElementById('c-tel').innerText = dInfo.tel;
+            document.getElementById('c-corr').innerText = dInfo.corr;
+            document.getElementById('c-com').innerText = dInfo.com;
+            document.getElementById('c-coord').innerText = dInfo.coord;
+            document.getElementById('c-tipo').innerText = ap.tipo;
+            document.getElementById('c-desc').innerText = ap.desc;
+            document.getElementById('c-fecha').innerText = ap.fecha;
+            document.getElementById('c-monto').innerText = ap.monto;
+            document.getElementById('sig-nombre').innerText = ap.dirigente;
+            document.getElementById('sig-cedula').innerText = `Cédula: ${ap.cedula}`;
+            document.getElementById('modal-constancia').style.display = 'flex';
+        }
+
+        function cerrarConstancia() { document.getElementById('modal-constancia').style.display = 'none'; }
+
+        function actualizarGraficas() {
+            const cTipo = document.getElementById('chart-tipo-apoyo');
+            cTipo.innerHTML = '';
+            let tConteo = {};
+            listaApoyos.forEach(ap => { tConteo[ap.tipo] = (tConteo[ap.tipo] || 0) + 1; });
+            let tot = listaApoyos.length || 1;
+            for (let t in tConteo) {
+                let pct = Math.round((tConteo[t] / tot) * 100);
+                cTipo.innerHTML += `<div class="chart-row"><div class="chart-info"><span>${t}</span><strong>${tConteo[t]} (${pct}%)</strong></div><div class="chart-track"><div class="chart-fill" style="width: ${pct}%; background: var(--primary);"></div></div></div>`;
+            }
+
+            const cCorr = document.getElementById('chart-corregimientos');
+            cCorr.innerHTML = '';
+            let cConteo = {};
+            baseDeDatosDirigientes.forEach(d => { cConteo[d.corr] = (cConteo[d.corr] || 0) + 1; });
+            let cOrd = Object.keys(cConteo).sort((a,b) => cConteo[b] - cConteo[a]).slice(0, 4);
+            let maxC = cConteo[cOrd[0]] || 1;
+            cOrd.forEach(c => {
+                let pct = Math.round((cConteo[c] / maxC) * 100);
+                cCorr.innerHTML += `<div class="chart-row"><div class="chart-info"><span>${c}</span><strong>${cConteo[c]} dirigentes</strong></div><div class="chart-track"><div class="chart-fill" style="width: ${pct}%; background: var(--success);"></div></div></div>`;
+            });
+        }
+
+        function llenarSelectDirigientes() {
+            const sel = document.getElementById('select-dirigente');
+            sel.innerHTML = '<option value="">Seleccione...</option>';
+            baseDeDatosDirigientes.forEach(d => {
+                let opt = document.createElement('option');
+                opt.value = `${d.nombre}|${d.cedula}`;
+                opt.textContent = `${d.nombre} (${d.cedula})`;
+                sel.appendChild(opt);
+            });
+        }
+
+        function abrirModalDirigente() { document.getElementById('modal-dirigente').style.display = 'flex'; }
+        function cerrarModalDirigente() { document.getElementById('modal-dirigente').style.display = 'none'; }
+        
+        async function guardarDirigente(e) {
+            e.preventDefault();
+            baseDeDatosDirigientes.unshift({
+                id: baseDeDatosDirigientes.length + 1,
+                nombre: document.getElementById('dir-nombre').value.toUpperCase(),
+                cedula: document.getElementById('dir-cedula').value,
+                tel: document.getElementById('dir-tel').value,
+                corr: document.getElementById('dir-corr').value,
+                com: document.getElementById('dir-com').value,
+                coord: document.getElementById('dir-coord').value.toUpperCase(),
+                part: document.getElementById('dir-part').value
+            });
+            await guardarTodoEnStorage();
+            renderizarTablaDirigientes(baseDeDatosDirigientes);
+            llenarSelectDirigientes();
+            cerrarModalDirigente();
+            alert('¡Dirigente registrado con éxito!');
+        }
+
+        function abrirModalApoyo() { document.getElementById('modal-apoyo').style.display = 'flex'; }
+        function cerrarModalApoyo() { document.getElementById('modal-apoyo').style.display = 'none'; }
+        
+        async function guardarApoyo(e) {
+            e.preventDefault();
+            const val = document.getElementById('select-dirigente').value;
+            if(!val) return alert('Seleccione un dirigente');
+            const [nom, ced] = val.split('|');
+            let mnt = document.getElementById('input-monto').value;
+            if(!mnt.startsWith('$')) mnt = '$' + mnt;
+
+            listaApoyos.unshift({
+                dirigente: nom, cedula: ced,
+                tipo: document.getElementById('select-tipo').value,
+                desc: document.getElementById('input-desc').value,
+                monto: mnt,
+                fecha: document.getElementById('input-fecha').value
+            });
+            await guardarTodoEnStorage();
+            renderizarTablaApoyos(listaApoyos);
+            cerrarModalApoyo();
+            alert('¡Apoyo registrado con éxito!');
+        }
+
+        async function eliminarApoyo(idx) {
+            if(confirm('¿Eliminar apoyo?')) {
+                listaApoyos.splice(idx, 1);
+                await guardarTodoEnStorage();
+                renderizarTablaApoyos(listaApoyos);
+            }
+        }
+
+        function cambiarVista(v, btn) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + v).classList.add('active');
+            if(btn) btn.classList.add('active');
+        }
+
+        function filtrarTabla() {
+            let q = document.getElementById('busqueda-tabla').value.toLowerCase();
+            let res = baseDeDatosDirigientes.filter(d => d.nombre.toLowerCase().includes(q) || d.cedula.toLowerCase().includes(q) || d.corr.toLowerCase().includes(q));
+            renderizarTablaDirigientes(res);
+        }
     </script>
 </body>
 </html>
