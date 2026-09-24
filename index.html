@@ -822,7 +822,15 @@
                     });
                 }
 
-                const datos = convertirFilasPDFADirigentes(filas, textoCompleto);
+                let datos = convertirFilasPDFADirigentes(filas, textoCompleto);
+
+                // Si la detección por filas encuentra pocos registros, usamos el texto completo
+                // del PDF y extraemos TODAS las cédulas. Esto evita que un cambio de formato,
+                // salto de línea o tabla partida haga que solo se importen 1 o 2 dirigentes.
+                const datosPorCedula = extraerDirigentesPorCedula(textoCompleto);
+                if (datosPorCedula.length > datos.length) {
+                    datos = datosPorCedula;
+                }
 
                 if (!datos.length) {
                     mostrarToast('No se pudieron identificar registros de dirigentes. Verifique que el PDF contenga texto seleccionable y columnas de datos.', 'danger');
@@ -893,6 +901,69 @@
             return String(texto || '')
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                 .toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function extraerDirigentesPorCedula(textoCompleto) {
+            const texto = String(textoCompleto || '')
+                .replace(/\u00a0/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            // Captura todas las cédulas del documento, sin asumir cuántas hay.
+            const regex = /\b\d{1,2}-\d{3,4}-\d{3,6}\b/g;
+            const encontrados = [];
+            let match;
+            while ((match = regex.exec(texto)) !== null) {
+                const cedula = match[0];
+                if (!encontrados.some(x => normalizarCedula(x.cedula) === normalizarCedula(cedula))) {
+                    encontrados.push({ cedula, index: match.index });
+                }
+            }
+
+            const registros = [];
+            encontrados.forEach((actual, i) => {
+                const inicio = Math.max(0, actual.index - 180);
+                const fin = i < encontrados.length - 1 ? encontrados[i + 1].index : Math.min(texto.length, actual.index + 500);
+                const antes = texto.substring(inicio, actual.index);
+                const despues = texto.substring(actual.index + actual.cedula.length, fin);
+
+                const telefonoMatch = despues.match(/\b(?:6\d{3}-?\d{4}|[2-9]\d{3}-\d{4})\b/) || antes.match(/\b(?:6\d{3}-?\d{4}|[2-9]\d{3}-\d{4})\b/);
+                const telefono = telefonoMatch ? normalizarTelefono(telefonoMatch[0]) : '';
+
+                // El nombre suele aparecer inmediatamente antes de la cédula.
+                let nombreTexto = antes
+                    .replace(/\b(?:NOMBRE|NOMBRES|APELLIDO|APELLIDOS|CEDULA|CÉDULA|IDENTIFICACION|ID)\b/gi, ' ')
+                    .replace(/\b(?:6\d{3}-?\d{4}|[2-9]\d{3}-\d{4})\b/g, ' ')
+                    .replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 .'-]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                const palabras = nombreTexto.split(' ').filter(p => p.length >= 2);
+                const nombre = palabras.slice(-6).join(' ') || `Dirigente ${i + 1}`;
+
+                const todo = antes + ' ' + despues;
+                registros.push({
+                    nombre: nombre.toUpperCase(),
+                    cedula: actual.cedula,
+                    telefono,
+                    corregimiento: extraerCampoCercano(todo, ['corregimiento']) || 'Centro',
+                    comunidad: extraerCampoCercano(todo, ['comunidad', 'barrio', 'sector']) || 'Comunidad General',
+                    coordinador: extraerCampoCercano(todo, ['coordinador']) || 'General',
+                    participacion: detectarParticipacion(todo)
+                });
+            });
+
+            return registros;
+        }
+
+        function extraerCampoCercano(texto, etiquetas) {
+            const t = String(texto || '');
+            for (const etiqueta of etiquetas) {
+                const re = new RegExp(etiqueta + '\\s*[:\\-]?\\s*([A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 .\'-]{2,60})', 'i');
+                const m = t.match(re);
+                if (m) return limpiarTextoPDF(m[1]);
+            }
+            return '';
         }
 
         function convertirFilasPDFADirigentes(filas, textoCompleto) {
