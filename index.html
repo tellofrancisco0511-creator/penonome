@@ -16,6 +16,7 @@
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
+            --header-dark: #2b3e50;
         }
 
         * {
@@ -339,11 +340,13 @@
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            overflow-y: auto;
+            padding: 20px 0;
         }
 
         .modal-card {
@@ -410,9 +413,136 @@
             border-radius: 4px;
         }
 
-        /* REGLA PARA OCULTAR EL VALOR AL IMPRIMIR */
+        /* DISEÑO DE LA CONSTANCIA ESTILO OFICIAL */
+        .constancia-box {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 25px;
+            width: 100%;
+            max-width: 750px;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .constancia-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .section-title-bar {
+            background-color: var(--header-dark);
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .beneficiary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px 30px;
+            font-size: 0.85rem;
+            margin-bottom: 25px;
+        }
+
+        .beneficiary-field label {
+            display: block;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .beneficiary-field span {
+            color: var(--text-main);
+            font-weight: 600;
+            border-bottom: 1px solid #f1f5f9;
+            display: block;
+            padding-bottom: 3px;
+        }
+
+        .constancia-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .constancia-table th {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 8px 10px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: left;
+        }
+
+        .constancia-table td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 10px;
+        }
+
+        .observations-box {
+            background-color: #fef9c3;
+            border-left: 4px solid #ca8a04;
+            padding: 10px 15px;
+            font-size: 0.78rem;
+            margin-bottom: 30px;
+            color: #713f12;
+            line-height: 1.4;
+        }
+
+        .signatures-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 45px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 1px solid #1e293b;
+            width: 220px;
+            margin: 0 auto 5px auto;
+            padding-top: 5px;
+        }
+
+        /* REGLA PARA OCULTAR VALORES Y MONTOS AL IMPRIMIR */
         @media print {
-            #c-monto-container {
+            body * {
+                visibility: hidden;
+            }
+            #modal-constancia, #modal-constancia * {
+                visibility: visible;
+            }
+            #modal-constancia {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                padding: 0;
+            }
+            .modal-card {
+                box-shadow: none !important;
+                border: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+            }
+            .modal-footer, .no-print {
+                display: none !important;
+            }
+            /* OCULTAR COLUMNAS Y FILAS DE VALORES MONETARIOS AL IMPRIMIR */
+            .print-hidden-val {
                 display: none !important;
             }
         }
@@ -744,38 +874,111 @@
         </div>
     </div>
 
-    <!-- MODAL CONSTANCIA -->
+    <!-- MODAL CONSTANCIA (DISEÑO EXACTO SOLICITADO) -->
     <div class="modal-overlay" id="modal-constancia">
-        <div class="modal-card" style="max-width: 650px;">
-            <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:1rem; margin-bottom:1rem;">
-                <h3 style="margin:0;">CONSTANCIA DE ENTREGA DE APOYO COMUNITARIO</h3>
-                <span id="constancia-num" style="font-size:0.85rem; color:#666;">N° JDLG-1620</span>
-                <div style="font-size:0.8rem; color:#666; margin-top:0.2rem;" id="constancia-fecha-top"></div>
+        <div class="modal-card" style="max-width: 780px; padding: 25px;">
+            <div class="constancia-box">
+                <!-- Encabezado de la Constancia -->
+                <div class="constancia-header">
+                    <div>
+                        <h2 style="color: #1e3a8a; font-size: 1.5rem; font-weight: 900; letter-spacing: -0.5px;">JULIO <span style="font-size: 0.8rem; display:block; color:var(--text-muted); font-weight:600;">DE LA GUARDIA</span></h2>
+                    </div>
+                    <div style="text-align: center;">
+                        <h3 style="font-size: 1.1rem; color: #1e293b; font-weight: 800; letter-spacing: 0.5px;">CONSTANCIA DE ENTREGA</h3>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Documento Oficial - Sistema de Gestión Comunitaria</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);" id="constancia-fecha-top">09/23/2026</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.85rem; font-weight: bold; color: #1e293b;" id="constancia-num">N° JDLG-1624</div>
+                        <div style="font-size: 0.75rem; color: var(--success); font-weight: 600;">Constancia Válida</div>
+                    </div>
+                </div>
+
+                <!-- Sección Información del Beneficiario -->
+                <div class="section-title-bar">Información del Beneficiario</div>
+                <div class="beneficiary-grid">
+                    <div class="beneficiary-field">
+                        <label>Nombre Completo:</label>
+                        <span id="c-nombre">Adiel Vargas Moran</span>
+                    </div>
+                    <div class="beneficiary-field">
+                        <label>Cédula de Identidad:</label>
+                        <span id="c-cedula">2-708-363</span>
+                    </div>
+                    <div class="beneficiary-field">
+                        <label>Teléfono:</label>
+                        <span id="c-tel">68564977</span>
+                    </div>
+                    <div class="beneficiary-field">
+                        <label>Corregimiento:</label>
+                        <span id="c-corr">Pajonal</span>
+                    </div>
+                    <div class="beneficiary-field">
+                        <label>Comunidad:</label>
+                        <span id="c-com">Sofre Centro</span>
+                    </div>
+                    <div class="beneficiary-field">
+                        <label>Coordinador:</label>
+                        <span id="c-coord">Adiel Vargas Moran</span>
+                    </div>
+                </div>
+
+                <!-- Sección Detalles del Apoyo -->
+                <div class="section-title-bar">Detalles del Apoyo Entregado</div>
+                <table class="constancia-table">
+                    <thead>
+                        <tr>
+                            <th>CONCEPTO</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th>FECHA</th>
+                            <th class="print-hidden-val">VALOR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="c-tipo" style="font-weight: 600;">ECONOMICO</td>
+                            <td id="c-desc">2 BOLSAS DE ARROZ</td>
+                            <td id="c-fecha">09/23/2026</td>
+                            <td class="print-hidden-val" style="color: var(--success); font-weight: bold;" id="c-monto">$16.00</td>
+                        </tr>
+                        <tr class="print-hidden-val">
+                            <td colspan="3" style="text-align: right; font-weight: bold; background: #f8fafc;">TOTAL ENTREGADO:</td>
+                            <td style="color: var(--success); font-weight: bold; background: #f8fafc;" id="c-monto-total">$16.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Observaciones -->
+                <div class="observations-box">
+                    <strong>OBSERVACIONES:</strong><br>
+                    Por medio de la presente se hace constar la entrega del apoyo descrito al dirigente comunitario arriba mencionado. Este documento es válido como constancia oficial de recepción.
+                </div>
+
+                <!-- Firmas -->
+                <div class="signatures-container">
+                    <div>
+                        <div class="signature-line" id="sig-nombre">Adiel Vargas Moran</div>
+                        <div style="font-weight: bold; font-size: 0.78rem;">FIRMA DEL DIRIGENTE BENEFICIARIO</div>
+                        <div style="color: var(--text-muted); font-size: 0.72rem;" id="sig-cedula">Cédula: 2-708-363</div>
+                    </div>
+                    <div>
+                        <div class="signature-line">DAVID TEJEDA T.</div>
+                        <div style="font-weight: bold; font-size: 0.78rem;">FIRMA DE QUIEN ENTREGA</div>
+                        <div style="color: var(--text-muted); font-size: 0.72rem;">OFICINISTA I</div>
+                    </div>
+                </div>
+
+                <!-- Pie de página de constancia -->
+                <div style="text-align: center; margin-top: 35px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 0.68rem; color: var(--text-muted);">
+                    Constancia generada automáticamente por el Sistema de Gestión de Dirigientes Comunitarios<br>
+                    Fecha de generación: 09/23/2026 4:20:14 p. m. | Este documento es una constancia oficial válida
+                </div>
             </div>
-            <div style="font-size:0.9rem; line-height:1.6;">
-                <p>Por medio de la presente se hace constar que se ha hecho entrega formal del apoyo comunitario al siguiente dirigente:</p>
-                <ul style="list-style:none; margin:1rem 0; padding:1rem; background:#f8fafc; border-radius:6px;">
-                    <li><strong>Nombre:</strong> <span id="c-nombre"></span></li>
-                    <li><strong>Cédula:</strong> <span id="c-cedula"></span></li>
-                    <li><strong>Teléfono:</strong> <span id="c-tel"></span></li>
-                    <li><strong>Corregimiento / Comunidad:</strong> <span id="c-corr"></span> - <span id="c-com"></span></li>
-                    <li><strong>Coordinador:</strong> <span id="c-coord"></span></li>
-                </ul>
-                <p><strong>Detalle del Apoyo:</strong></p>
-                <p style="background:#fff; border:1px solid var(--border); padding:0.75rem; border-radius:6px; margin-top:0.5rem;">
-                    Tipo: <span id="c-tipo"></span><br>
-                    Descripción: <span id="c-desc"></span><br>
-                    Fecha de Entrega: <span id="c-fecha"></span><br>
-                    <span id="c-monto-container">Valor Estimado: <span id="c-monto" style="color:var(--success); font-weight:bold;"></span></span>
-                </p>
-            </div>
-            <div style="margin-top:2rem; display:flex; justify-content:space-between; text-align:center; font-size:0.85rem;">
-                <div><div style="border-bottom:1px solid #333; width:180px; margin-bottom:0.3rem; height:30px;"></div>Entregado por / Operativa</div>
-                <div><div style="border-bottom:1px solid #333; width:180px; margin-bottom:0.3rem; height:30px;" id="sig-nombre"></div>Recibido Conforme<br><span id="sig-cedula" style="font-size:0.75rem; color:#666;"></span></div>
-            </div>
-            <div class="modal-footer" style="margin-top:2rem;">
-                <button type="button" class="btn-primary" onclick="window.print()" style="width:auto;">🖨️ Imprimir Constancia</button>
-                <button type="button" class="btn-danger" onclick="cerrarConstancia()" style="width:auto;">Cerrar</button>
+
+            <!-- Botones fuera de la zona de impresión -->
+            <div class="modal-footer no-print" style="margin-top: 1.5rem; justify-content: center;">
+                <button type="button" class="btn-primary" onclick="window.print()" style="width:auto; background: var(--success); display: flex; align-items: center; gap: 0.4rem;">🖨️ IMPRIMIR CONSTANCIA</button>
+                <button type="button" class="btn-danger" onclick="cerrarConstancia()" style="width:auto;">CERRAR VENTANA</button>
             </div>
         </div>
     </div>
@@ -1060,8 +1263,10 @@
         function abrirConstancia(idx) {
             let ap = listaApoyos[idx];
             let dInfo = baseDeDatosDirigientes.find(d => d.cedula === ap.cedula) || { tel: "68564977", corr: "Pajonal", com: "Sofre Centro", coord: ap.dirigente };
+            
+            let fechaActualStr = new Date().toLocaleDateString('es-ES');
             document.getElementById('constancia-num').innerText = `N° JDLG-${1620 + idx}`;
-            document.getElementById('constancia-fecha-top').innerText = new Date().toLocaleDateString('es-ES');
+            document.getElementById('constancia-fecha-top').innerText = fechaActualStr;
             document.getElementById('c-nombre').innerText = ap.dirigente;
             document.getElementById('c-cedula').innerText = ap.cedula;
             document.getElementById('c-tel').innerText = dInfo.tel;
@@ -1072,6 +1277,7 @@
             document.getElementById('c-desc').innerText = ap.desc;
             document.getElementById('c-fecha').innerText = ap.fecha;
             document.getElementById('c-monto').innerText = ap.monto;
+            document.getElementById('c-monto-total').innerText = ap.monto;
             document.getElementById('sig-nombre').innerText = ap.dirigente;
             document.getElementById('sig-cedula').innerText = `Cédula: ${ap.cedula}`;
             document.getElementById('modal-constancia').style.display = 'flex';
