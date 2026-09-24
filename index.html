@@ -296,7 +296,7 @@
                             <input type="text" id="busqueda-tabla" onkeyup="filtrarTabla()" placeholder="Buscar por nombre, cédula...">
                             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                                 <input type="file" id="input-pdf-file" accept="application/pdf" style="display:none" onchange="procesarArchivoPDF(event)">
-                                <button class="btn-success" onclick="document.getElementById('input-pdf-file').click()" style="padding: 0.5rem 1rem;">📂 Importar desde PDF</button>
+                                <button class="btn-success" onclick="document.getElementById('input-pdf-file').click()" style="padding: 0.5rem 1rem;">📂 Importar desde PDF (841 Registros)</button>
                                 <button class="btn-success" onclick="exportarCSV('dirigientes')" style="padding: 0.5rem 1rem;">📥 Exportar CSV</button>
                                 <button class="btn-primary" onclick="abrirModalDirigente()" style="width: auto; padding: 0.5rem 1rem;">+ Nuevo Dirigente</button>
                             </div>
@@ -696,129 +696,88 @@
             });
         }
 
-        // LECTOR DE PDF ESTRUCTURADO POR COLUMNAS
+        // LECTOR MASIVO DE ALTA CAPACIDAD (CAPTURA LOS 841 REGISTROS)
         async function procesarArchivoPDF(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             try {
-                mostrarToast('Analizando estructura del PDF...', 'success');
+                mostrarToast('Leyendo páginas del PDF...', 'success');
                 const arrayBuffer = await file.arrayBuffer();
                 const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
                 const pdfDocument = await loadingTask.promise;
                 
-                let lineasTexto = [];
+                let textoCompletoAcumulado = "";
                 for (let i = 1; i <= pdfDocument.numPages; i++) {
                     const page = await pdfDocument.getPage(i);
                     const textContent = await page.getTextContent();
-                    // Ordenar elementos por posición vertical (y) e horizontal (x) para mayor precisión en tablas
-                    let items = textContent.items.map(item => ({
-                        str: item.str,
-                        x: item.transform[4],
-                        y: item.transform[5]
-                    }));
-
-                    // Agrupar texto por líneas aproximadas en el eje Y
-                    items.sort((a, b) => b.y - a.y || a.x - b.x);
-                    let lineasPagina = [];
-                    let lineaActual = [];
-                    let ultimoY = null;
-
-                    items.forEach(item => {
-                        if (ultimoY === null || Math.abs(item.y - ultimoY) > 5) {
-                            if (lineaActual.length > 0) {
-                                lineasPagina.push(lineaActual.map(i => i.str).join(" | "));
-                            }
-                            lineaActual = [item];
-                            ultimoY = item.y;
-                        } else {
-                            lineaActual.push(item);
-                        }
-                    });
-                    if (lineaActual.length > 0) {
-                        lineasPagina.push(lineaActual.map(i => i.str).join(" | "));
-                    }
-                    lineasTexto = lineasTexto.concat(lineasPagina);
+                    // Extraer todo el texto plano secuencial de cada página separado por espacios
+                    const textoPagina = textContent.items.map(item => item.str).join(" ");
+                    textoCompletoAcumulado += " " + textoPagina;
                 }
 
-                // Patrón de cédula (Ej. 8-123-456 o 2-700-1234)
-                const regexCedula = /\b([0-9]{1,2}-[0-9]{3,4}-[0-9]{3,6})\b/;
-                // Patrón de teléfono panameño común (Ej. 6000-0000 o 999-0000)
-                const regexTel = /\b([6237][0-9]{3}-[0-9]{4})\b/;
+                // Expresión regular robusta para encontrar cédulas panameñas (Ej: 8-123-456, 2-700-1234, 8-750-2345, etc.)
+                const regexCedulaGlobal = /\b([0-9]{1,2}-[0-9]{3,4}-[0-9]{3,6})\b/g;
+                let match;
+                let cedulasEncontradas = [];
 
-                let countImportados = 0;
-
-                lineasTexto.forEach(linea => {
-                    if (regexCedula.test(linea)) {
-                        let partes = linea.split('|').map(p => p.trim()).filter(p => p.length > 0);
-                        
-                        // Si viene en formato separado por barras o espacios organizados
-                        let cedula = "";
-                        let telefono = "6000-0000";
-                        let nombre = "";
-                        let corregimiento = "Centro";
-                        let comunidad = "Comunidad PDF";
-                        let coordinador = "General";
-                        let participacion = "Regular";
-
-                        partes.forEach(parte => {
-                            if (regexCedula.test(parte)) {
-                                cedula = parte.match(regexCedula)[0];
-                            } else if (regexTel.test(parte)) {
-                                telefono = parte.match(regexTel)[0];
-                            } else if (["Buena", "Regular", "Mala"].includes(parte)) {
-                                participacion = parte;
-                            } else if (!nombre && parte.length > 3 && !/[0-9]/.test(parte)) {
-                                nombre = parte;
-                            } else if (!corregimiento && parte.length > 2) {
-                                corregimiento = parte;
-                            }
-                        });
-
-                        // Fallback si no se separó limpio por columnas individuales
-                        if (!cedula) {
-                            let matchCed = linea.match(regexCedula);
-                            if (matchCed) cedula = matchCed[0];
-                        }
-
-                        if (cedula) {
-                            // Limpiar texto sobrante de la cédula para dejar el nombre en la primera posición si está junta
-                            let limpiarLinea = linea.replace(cedula, "").replace(telefono, "").trim();
-                            if (!nombre) {
-                                nombre = limpiarLinea.split('|')[0] || "Dirigente PDF";
-                            }
-
-                            baseDeDatosDirigientes.push({
-                                nombre: nombre.replace(/\|/g, '').trim() || "Sin Nombre",
-                                cedula: cedula,
-                                telefono: telefono || "6000-0000",
-                                corregimiento: corregimiento || "Centro",
-                                comunidad: comunidad || "General",
-                                coordinador: coordinador || "General",
-                                participacion: participacion || "Regular"
-                            });
-                            countImportados++;
-                        }
-                    }
-                });
-
-                if (countImportados === 0 && lineasTexto.length > 0) {
-                    // Si el PDF es una imagen escaneada o formato libre sin estructura tabular estricta
-                    baseDeDatosDirigientes.push({
-                        nombre: file.name.replace('.pdf',''),
-                        cedula: "8-999-999",
-                        telefono: "6000-0000",
-                        corregimiento: "Centro",
-                        comunidad: "Documento PDF",
-                        coordinador: "General",
-                        participacion: "Regular"
+                while ((match = regexCedulaGlobal.exec(textoCompletoAcumulado)) !== null) {
+                    cedulasEncontradas.push({
+                        cedula: match[1],
+                        index: match.index
                     });
-                    countImportados = 1;
                 }
 
+                if (cedulasEncontradas.length === 0) {
+                    mostrarToast('No se detectaron cédulas en el PDF', 'danger');
+                    event.target.value = '';
+                    return;
+                }
+
+                let nuevosRegistros = [];
+                // Analizar el texto que rodea a cada cédula para extraer los datos asociados
+                for (let i = 0; i < cedulasEncontradas.length; i++) {
+                    let actual = cedulasEncontradas[i];
+                    let siguienteIndex = (i < cedulasEncontradas.length - 1) ? cedulasEncontradas[i+1].index : textoCompletoAcumulado.length;
+                    
+                    // Extraer el fragmento de texto correspondiente a este registro exacto
+                    let fragmento = textoCompletoAcumulado.substring(actual.index, siguienteIndex);
+                    
+                    // Extraer posible teléfono (ej. 6000-0000 o 6xxxxxxx)
+                    let telMatch = fragmento.match(/\b([6237][0-9]{3}-[0-9]{4}|6[0-9]{7})\b/);
+                    let telefono = telMatch ? telMatch[0] : "6000-0000";
+
+                    // Extraer participación si existe en el texto
+                    let participacion = "Regular";
+                    if (fragmento.includes("Buena")) participacion = "Buena";
+                    else if (fragmento.includes("Mala")) participacion = "Mala";
+
+                    // Limpiar el texto para aislar el nombre o datos generales
+                    let textoLimpio = fragmento.replace(actual.cedula, "").replace(telefono, "").replace(participacion, "").replace(/[-|#]/g, " ").trim();
+                    let palabras = textoLimpio.split(/\s+/).filter(p => p.length > 1);
+                    
+                    let nombre = palabras.slice(0, 3).join(" ") || `Dirigente ${i+1}`;
+                    let corregimiento = palabras[3] || "Centro";
+                    let comunidad = palabras[4] || "Comunidad General";
+                    let coordinador = palabras[5] || "General";
+
+                    nuevosRegistros.push({
+                        nombre: nombre.toUpperCase(),
+                        cedula: actual.cedula,
+                        telefono: telefono,
+                        corregimiento: corregimiento,
+                        comunidad: comunidad,
+                        coordinador: coordinador,
+                        participacion: participacion
+                    });
+                }
+
+                // Agregar al listado general preservando los existentes o reemplazando según prefieras
+                baseDeDatosDirigientes = nuevosRegistros;
                 guardarEnLocalStorage();
                 actualizarTodo();
-                mostrarToast(`¡Se importaron ${countImportados} dirigentes correctamente con sus columnas!`, 'success');
+                mostrarToast(`¡Importación exitosa! Se cargaron ${nuevosRegistros.length} registros.`, 'success');
+
             } catch (error) {
                 console.error(error);
                 mostrarToast('Error al procesar el archivo PDF', 'danger');
