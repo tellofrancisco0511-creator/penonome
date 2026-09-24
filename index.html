@@ -163,7 +163,7 @@
         .card-table { background: var(--surface); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .table-header-actions { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; gap: 1rem; }
         .table-header-actions input { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; width: 250px; outline: none; background: var(--surface); color: var(--text-main); }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; min-width: 900px; }
         th, td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
         th { background: var(--bg-main); font-weight: 600; color: var(--text-muted); }
         tbody tr:hover { background: var(--bg-main); }
@@ -189,6 +189,32 @@
         .chart-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
         .chart-fill { height: 100%; border-radius: 4px; background: var(--primary); }
 
+        @media (max-width: 900px) {
+            body { overflow: auto; }
+            #app-container { min-height: 100vh; }
+            aside { width: 220px; }
+            .content-area { padding: 1rem; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .table-header-actions { align-items: stretch; }
+            .table-header-actions input { width: 100%; }
+            .card-table { overflow-x: auto; }
+            .modal-card { width: calc(100% - 2rem); max-height: 90vh; overflow-y: auto; }
+        }
+
+        @media (max-width: 650px) {
+            body { display: block; overflow: auto; }
+            #app-container { display: flex; flex-direction: column; }
+            aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+            .sidebar-menu { display: flex; overflow-x: auto; gap: .35rem; padding: .75rem; }
+            .sidebar-menu li { min-width: max-content; }
+            .menu-btn { width: auto; margin: 0; white-space: nowrap; }
+            .user-profile-box { display: none; }
+            header { padding: 0 1rem; }
+            .content-area { padding: .75rem; }
+            #modal-usuario form > div { grid-template-columns: 1fr !important; }
+        }
+
         @media print {
             aside, header, .table-header-actions, .modal-footer { display: none !important; }
         }
@@ -202,7 +228,7 @@
     <div id="login-screen">
         <div class="login-card">
             <h2>Acceso al Sistema</h2>
-            <p>Gestión de Dirigientes y Operativa Comunitaria</p>
+            <p>Gestión de Dirigentes y Operativa Comunitaria</p>
             <form onsubmit="realizarLogin(event)">
                 <div class="form-group">
                     <label>Usuario</label>
@@ -226,7 +252,7 @@
             </div>
             <ul class="sidebar-menu">
                 <li><button class="menu-btn active" onclick="cambiarVista('dashboard', this)">📊 Dashboard</button></li>
-                <li><button class="menu-btn" onclick="cambiarVista('dirigientes', this)">👥 Dirigientes <span id="badge-count" style="margin-left:auto; background:#e0e7ff; color:var(--primary); padding:0.1rem 0.4rem; border-radius:10px; font-size:0.75rem;">0</span></button></li>
+                <li><button class="menu-btn" onclick="cambiarVista('dirigientes', this)">👥 Dirigentes <span id="badge-count" style="margin-left:auto; background:#e0e7ff; color:var(--primary); padding:0.1rem 0.4rem; border-radius:10px; font-size:0.75rem;">0</span></button></li>
                 <li><button class="menu-btn" onclick="cambiarVista('apoyo', this)">🤝 Control de Apoyos</button></li>
                 <li><button class="menu-btn" onclick="cambiarVista('inventario', this)">📦 Inventario</button></li>
                 <li><button class="menu-btn" onclick="cambiarVista('electoral', this)">🗳️ Electoral</button></li>
@@ -264,7 +290,7 @@
 
                     <div class="metrics-grid">
                         <div class="metric-card">
-                            <span>Total Dirigientes</span>
+                            <span>Total Dirigentes</span>
                             <h3 id="total-dirigientes">0</h3>
                         </div>
                         <div class="metric-card">
@@ -548,8 +574,17 @@
             { codigo: "INV-002", nombre: "Balones de Fútbol", categoria: "Deportes", cantidad: 15, ubicacion: "Estante B" }
         ];
         let listaApoyos = JSON.parse(localStorage.getItem('sys_apoyos')) || [];
-        let baseDeDatosDirigientes = JSON.parse(localStorage.getItem('sys_dirigientes')) || [];
+        let baseDeDatosDirigentes = JSON.parse(localStorage.getItem('sys_dirigientes')) || [];
         let usuarioActual = null;
+
+        function escapeHTML(valor) {
+            return String(valor ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
         function mostrarToast(mensaje, tipo = 'success') {
             const container = document.getElementById('toast-container');
@@ -564,7 +599,7 @@
             localStorage.setItem('sys_usuarios', JSON.stringify(usuariosSistema));
             localStorage.setItem('sys_inventario', JSON.stringify(listaInventario));
             localStorage.setItem('sys_apoyos', JSON.stringify(listaApoyos));
-            localStorage.setItem('sys_dirigientes', JSON.stringify(baseDeDatosDirigientes));
+            localStorage.setItem('sys_dirigientes', JSON.stringify(baseDeDatosDirigentes));
         }
 
         function toggleDarkMode() {
@@ -602,12 +637,12 @@
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('view-' + vistaId).classList.add('active');
             btn.classList.add('active');
-            const titulos = { dashboard: "Panel General", dirigentes: "Gestión de Dirigientes", apoyo: "Control de Apoyos", inventario: "Inventario en Bodega", electoral: "Módulo Electoral", usuarios: "Gestión de Usuarios" };
+            const titulos = { dashboard: "Panel General", dirigentes: "Gestión de Dirigentes", apoyo: "Control de Apoyos", inventario: "Inventario en Bodega", electoral: "Módulo Electoral", usuarios: "Gestión de Usuarios" };
             document.getElementById('view-title').innerText = titulos[vistaId];
         }
 
         function actualizarTodo() {
-            renderDirigientes();
+            renderDirigentes();
             renderApoyos();
             renderInventario();
             renderUsuarios();
@@ -617,7 +652,7 @@
 
         function poblarFiltroCorregimientos() {
             const select = document.getElementById('filtro-dash-corr');
-            const corregimientos = [...new Set(baseDeDatosDirigientes.map(d => d.corregimiento))];
+            const corregimientos = [...new Set(baseDeDatosDirigentes.map(d => d.corregimiento))];
             select.innerHTML = '<option value="TODOS">Todos los Corregimientos</option>';
             corregimientos.forEach(c => {
                 select.innerHTML += `<option value="${c}">${c}</option>`;
@@ -626,16 +661,16 @@
 
         function actualizarDashboard() {
             const filtroCorr = document.getElementById('filtro-dash-corr').value;
-            let diriFiltrados = baseDeDatosDirigientes;
+            let diriFiltrados = baseDeDatosDirigentes;
             if(filtroCorr !== 'TODOS') {
-                diriFiltrados = baseDeDatosDirigientes.filter(d => d.corregimiento === filtroCorr);
+                diriFiltrados = baseDeDatosDirigentes.filter(d => d.corregimiento === filtroCorr);
             }
 
             document.getElementById('total-dirigientes').innerText = diriFiltrados.length;
             document.getElementById('total-apoyos-metric').innerText = listaApoyos.length;
             document.getElementById('total-inventario-metric').innerText = listaInventario.reduce((acc, item) => acc + Number(item.cantidad), 0);
 
-            document.getElementById('wm-tot').innerText = baseDeDatosDirigientes.length;
+            document.getElementById('wm-tot').innerText = baseDeDatosDirigentes.length;
             document.getElementById('wm-apo').innerText = listaApoyos.length;
             document.getElementById('wm-inv').innerText = listaInventario.length;
 
@@ -649,34 +684,50 @@
             document.getElementById('chart-tipo-apoyo').innerHTML = htmlTipos || '<p style="color:var(--text-muted);font-size:0.85rem;">Sin registros</p>';
 
             const corrs = {};
-            baseDeDatosDirigientes.forEach(d => corrs[d.corregimiento] = (corrs[d.corregimiento] || 0) + 1);
+            baseDeDatosDirigentes.forEach(d => corrs[d.corregimiento] = (corrs[d.corregimiento] || 0) + 1);
             let htmlCorr = '';
             for(let c in corrs) {
-                let pct = (corrs[c] / (baseDeDatosDirigientes.length || 1)) * 100;
+                let pct = (corrs[c] / (baseDeDatosDirigentes.length || 1)) * 100;
                 htmlCorr += `<div class="chart-row"><div class="chart-info"><span>${c}</span><span>${corrs[c]}</span></div><div class="chart-track"><div class="chart-fill" style="width: ${pct}%; background:var(--success);"></div></div></div>`;
             }
             document.getElementById('chart-corregimientos').innerHTML = htmlCorr || '<p style="color:var(--text-muted);font-size:0.85rem;">Sin registros</p>';
         }
 
-        function renderDirigientes() {
+        function renderDirigentes() {
             const tbody = document.getElementById('tabla-cuerpo');
             tbody.innerHTML = '';
-            baseDeDatosDirigientes.forEach((d, i) => {
-                tbody.innerHTML += `<tr><td>#${i+1}</td><td>${d.nombre}</td><td>${d.cedula}</td><td>${d.telefono}</td><td>${d.corregimiento}</td><td>${d.comunidad}</td><td>${d.coordinador}</td><td>${d.participacion}</td></tr>`;
+            baseDeDatosDirigentes.forEach((d, i) => {
+                tbody.innerHTML += `<tr>
+                    <td>#${i + 1}</td>
+                    <td>${escapeHTML(d.nombre)}</td>
+                    <td>${escapeHTML(d.cedula)}</td>
+                    <td>${escapeHTML(d.telefono)}</td>
+                    <td>${escapeHTML(d.corregimiento)}</td>
+                    <td>${escapeHTML(d.comunidad)}</td>
+                    <td>${escapeHTML(d.coordinador)}</td>
+                    <td>${escapeHTML(d.participacion)}</td>
+                </tr>`;
             });
-            document.getElementById('badge-count').innerText = baseDeDatosDirigientes.length;
+            document.getElementById('badge-count').innerText = baseDeDatosDirigentes.length;
         }
 
         function renderApoyos() {
             const tbody = document.getElementById('tabla-apoyos-cuerpo');
             tbody.innerHTML = '';
             listaApoyos.forEach((a, i) => {
-                tbody.innerHTML += `<tr><td>${a.dirigenteNombre}</td><td>${a.tipo}</td><td>${a.descripcion}</td><td>$${a.monto}</td><td>${a.fecha}</td><td><button class="btn-success" onclick="verConstancia(${i})">Constancia</button></td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td>${escapeHTML(a.dirigenteNombre)} / ${escapeHTML(a.cedula)}</td>
+                    <td>${escapeHTML(a.tipo)}</td>
+                    <td>${escapeHTML(a.descripcion)}</td>
+                    <td>$${escapeHTML(a.monto)}</td>
+                    <td>${escapeHTML(a.fecha)}</td>
+                    <td><button class="btn-success" onclick="verConstancia(${i})">Constancia</button></td>
+                </tr>`;
             });
             const sel = document.getElementById('select-dirigente');
             sel.innerHTML = '';
-            baseDeDatosDirigientes.forEach(d => {
-                sel.innerHTML += `<option value="${d.cedula}">${d.nombre} (${d.cedula})</option>`;
+            baseDeDatosDirigentes.forEach(d => {
+                sel.innerHTML += `<option value="${escapeHTML(d.cedula)}">${escapeHTML(d.nombre)} (${escapeHTML(d.cedula)})</option>`;
             });
         }
 
@@ -684,7 +735,14 @@
             const tbody = document.getElementById('tabla-inventario-cuerpo');
             tbody.innerHTML = '';
             listaInventario.forEach((inv, i) => {
-                tbody.innerHTML += `<tr><td>${inv.codigo}</td><td>${inv.nombre}</td><td>${inv.categoria}</td><td>${inv.cantidad}</td><td>${inv.ubicacion}</td><td><button class="btn-danger" onclick="eliminarInventario(${i})">Eliminar</button></td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td>${escapeHTML(inv.codigo)}</td>
+                    <td>${escapeHTML(inv.nombre)}</td>
+                    <td>${escapeHTML(inv.categoria)}</td>
+                    <td>${escapeHTML(inv.cantidad)}</td>
+                    <td>${escapeHTML(inv.ubicacion)}</td>
+                    <td><button class="btn-danger" onclick="eliminarInventario(${i})">Eliminar</button></td>
+                </tr>`;
             });
         }
 
@@ -692,97 +750,252 @@
             const tbody = document.getElementById('tabla-usuarios-cuerpo');
             tbody.innerHTML = '';
             usuariosSistema.forEach(u => {
-                tbody.innerHTML += `<tr><td>${u.nombre} (@${u.username})</td><td>${u.rol}</td><td>Acceso Total</td><td>-</td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td>${escapeHTML(u.nombre)} (@${escapeHTML(u.username)})</td>
+                    <td>${escapeHTML(u.rol)}</td>
+                    <td>Acceso Total</td>
+                    <td>-</td>
+                </tr>`;
             });
         }
 
-        // LECTOR MASIVO DE ALTA CAPACIDAD (CAPTURA LOS 841 REGISTROS)
+        // IMPORTADOR DE DIRIGENTES DESDE PDF
+        // Detecta tablas usando la posición X/Y de cada texto del PDF y también
+        // tiene un modo de respaldo para PDFs cuyo texto viene "aplanado".
         async function procesarArchivoPDF(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             try {
-                mostrarToast('Leyendo páginas del PDF...', 'success');
+                mostrarToast('Analizando el PDF. Esto puede tardar unos segundos...', 'success');
                 const arrayBuffer = await file.arrayBuffer();
                 const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
                 const pdfDocument = await loadingTask.promise;
-                
-                let textoCompletoAcumulado = "";
-                for (let i = 1; i <= pdfDocument.numPages; i++) {
-                    const page = await pdfDocument.getPage(i);
-                    const textContent = await page.getTextContent();
-                    // Extraer todo el texto plano secuencial de cada página separado por espacios
-                    const textoPagina = textContent.items.map(item => item.str).join(" ");
-                    textoCompletoAcumulado += " " + textoPagina;
-                }
 
-                // Expresión regular robusta para encontrar cédulas panameñas (Ej: 8-123-456, 2-700-1234, 8-750-2345, etc.)
-                const regexCedulaGlobal = /\b([0-9]{1,2}-[0-9]{3,4}-[0-9]{3,6})\b/g;
-                let match;
-                let cedulasEncontradas = [];
+                let filas = [];
+                let textoCompleto = '';
 
-                while ((match = regexCedulaGlobal.exec(textoCompletoAcumulado)) !== null) {
-                    cedulasEncontradas.push({
-                        cedula: match[1],
-                        index: match.index
+                for (let numeroPagina = 1; numeroPagina <= pdfDocument.numPages; numeroPagina++) {
+                    const page = await pdfDocument.getPage(numeroPagina);
+                    const content = await page.getTextContent();
+                    const items = content.items
+                        .filter(item => item.str && item.str.trim())
+                        .map(item => ({
+                            texto: item.str.trim(),
+                            x: item.transform ? item.transform[4] : 0,
+                            y: item.transform ? item.transform[5] : 0,
+                            pagina: numeroPagina
+                        }));
+
+                    textoCompleto += ' ' + items.map(i => i.texto).join(' ');
+
+                    // Agrupar elementos que están en la misma línea.
+                    const grupos = [];
+                    items.sort((a, b) => {
+                        if (Math.abs(a.y - b.y) > 3) return b.y - a.y;
+                        return a.x - b.x;
+                    });
+
+                    items.forEach(item => {
+                        let grupo = grupos.find(g => Math.abs(g.y - item.y) <= 3);
+                        if (!grupo) {
+                            grupo = { y: item.y, pagina: numeroPagina, items: [] };
+                            grupos.push(grupo);
+                        }
+                        grupo.items.push(item);
+                    });
+
+                    grupos.forEach(g => {
+                        g.items.sort((a, b) => a.x - b.x);
+                        const celdas = [];
+                        g.items.forEach(item => {
+                            const ultima = celdas[celdas.length - 1];
+                            // Une palabras/celdas que están muy cerca horizontalmente.
+                            if (ultima && item.x - ultima.finX < 7) {
+                                ultima.texto += ' ' + item.texto;
+                                ultima.finX = Math.max(ultima.finX, item.x + item.texto.length * 4);
+                            } else {
+                                celdas.push({ texto: item.texto, x: item.x, finX: item.x + item.texto.length * 4 });
+                            }
+                        });
+                        if (celdas.length >= 2) filas.push(celdas.map(c => c.texto.trim()).filter(Boolean));
                     });
                 }
 
-                if (cedulasEncontradas.length === 0) {
-                    mostrarToast('No se detectaron cédulas en el PDF', 'danger');
+                const datos = convertirFilasPDFADirigentes(filas, textoCompleto);
+
+                if (!datos.length) {
+                    mostrarToast('No se pudieron identificar registros de dirigentes. Verifique que el PDF contenga texto seleccionable y columnas de datos.', 'danger');
                     event.target.value = '';
                     return;
                 }
 
-                let nuevosRegistros = [];
-                // Analizar el texto que rodea a cada cédula para extraer los datos asociados
-                for (let i = 0; i < cedulasEncontradas.length; i++) {
-                    let actual = cedulasEncontradas[i];
-                    let siguienteIndex = (i < cedulasEncontradas.length - 1) ? cedulasEncontradas[i+1].index : textoCompletoAcumulado.length;
-                    
-                    // Extraer el fragmento de texto correspondiente a este registro exacto
-                    let fragmento = textoCompletoAcumulado.substring(actual.index, siguienteIndex);
-                    
-                    // Extraer posible teléfono (ej. 6000-0000 o 6xxxxxxx)
-                    let telMatch = fragmento.match(/\b([6237][0-9]{3}-[0-9]{4}|6[0-9]{7})\b/);
-                    let telefono = telMatch ? telMatch[0] : "6000-0000";
+                // Evita duplicados por cédula y conserva registros existentes.
+                const mapa = new Map();
+                baseDeDatosDirigentes.forEach(d => {
+                    if (d.cedula) mapa.set(normalizarCedula(d.cedula), d);
+                });
+                datos.forEach(d => {
+                    if (d.cedula) mapa.set(normalizarCedula(d.cedula), d);
+                });
 
-                    // Extraer participación si existe en el texto
-                    let participacion = "Regular";
-                    if (fragmento.includes("Buena")) participacion = "Buena";
-                    else if (fragmento.includes("Mala")) participacion = "Mala";
-
-                    // Limpiar el texto para aislar el nombre o datos generales
-                    let textoLimpio = fragmento.replace(actual.cedula, "").replace(telefono, "").replace(participacion, "").replace(/[-|#]/g, " ").trim();
-                    let palabras = textoLimpio.split(/\s+/).filter(p => p.length > 1);
-                    
-                    let nombre = palabras.slice(0, 3).join(" ") || `Dirigente ${i+1}`;
-                    let corregimiento = palabras[3] || "Centro";
-                    let comunidad = palabras[4] || "Comunidad General";
-                    let coordinador = palabras[5] || "General";
-
-                    nuevosRegistros.push({
-                        nombre: nombre.toUpperCase(),
-                        cedula: actual.cedula,
-                        telefono: telefono,
-                        corregimiento: corregimiento,
-                        comunidad: comunidad,
-                        coordinador: coordinador,
-                        participacion: participacion
-                    });
-                }
-
-                // Agregar al listado general preservando los existentes o reemplazando según prefieras
-                baseDeDatosDirigientes = nuevosRegistros;
+                baseDeDatosDirigentes = Array.from(mapa.values());
                 guardarEnLocalStorage();
                 actualizarTodo();
-                mostrarToast(`¡Importación exitosa! Se cargaron ${nuevosRegistros.length} registros.`, 'success');
+
+                const nuevos = datos.filter(d => !baseDeDatosDirigentes.some(x => normalizarCedula(x.cedula) === normalizarCedula(d.cedula)));
+                mostrarToast(`Importación completada: ${datos.length} registros detectados. Total actual: ${baseDeDatosDirigentes.length}.`, 'success');
+                console.log('Registros importados desde PDF:', datos);
 
             } catch (error) {
-                console.error(error);
-                mostrarToast('Error al procesar el archivo PDF', 'danger');
+                console.error('Error PDF:', error);
+                mostrarToast('Error al procesar el PDF. Si es un PDF escaneado como imagen, primero debe aplicarse OCR.', 'danger');
             }
             event.target.value = '';
+        }
+
+        function normalizarCedula(valor) {
+            return String(valor || '').replace(/\s+/g, '').trim().toUpperCase();
+        }
+
+        function limpiarTextoPDF(valor) {
+            return String(valor || '')
+                .replace(/[|]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function extraerCedula(texto) {
+            const t = String(texto || '').replace(/\s+/g, ' ');
+            const m = t.match(/\b\d{1,2}-\d{3,4}-\d{3,6}\b/);
+            return m ? m[0] : '';
+        }
+
+        function esTelefono(texto) {
+            return /^(?:6\d{3}-?\d{4}|[2-9]\d{3}-\d{4})$/.test(String(texto || '').replace(/\s/g, ''));
+        }
+
+        function normalizarTelefono(texto) {
+            const t = String(texto || '').replace(/\s/g, '');
+            if (/^6\d{7}$/.test(t)) return t.slice(0,4) + '-' + t.slice(4);
+            return t;
+        }
+
+        function detectarParticipacion(texto) {
+            const t = String(texto || '').toLowerCase();
+            if (t.includes('buena')) return 'Buena';
+            if (t.includes('mala')) return 'Mala';
+            if (t.includes('regular')) return 'Regular';
+            return 'Regular';
+        }
+
+        function normalizarEncabezado(texto) {
+            return String(texto || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function convertirFilasPDFADirigentes(filas, textoCompleto) {
+            // Busca una fila de encabezados para conocer el orden real de las columnas.
+            let encabezado = null;
+            let encabezadoIndex = -1;
+            const palabrasClave = ['nombre', 'cedula', 'telefono', 'corregimiento', 'comunidad', 'coordinador'];
+
+            filas.forEach((fila, idx) => {
+                const joined = fila.map(normalizarEncabezado).join(' ');
+                const coincidencias = palabrasClave.filter(k => joined.includes(k)).length;
+                if (coincidencias >= 2 && encabezadoIndex === -1) {
+                    encabezado = fila;
+                    encabezadoIndex = idx;
+                }
+            });
+
+            const registros = [];
+
+            if (encabezado) {
+                const mapaColumnas = {};
+                encabezado.forEach((celda, i) => {
+                    const h = normalizarEncabezado(celda);
+                    if (h.includes('nombre')) mapaColumnas.nombre = i;
+                    else if (h.includes('cedula') || h.includes('identificacion')) mapaColumnas.cedula = i;
+                    else if (h.includes('telefono') || h.includes('celular') || h.includes('movil')) mapaColumnas.telefono = i;
+                    else if (h.includes('corregimiento')) mapaColumnas.corregimiento = i;
+                    else if (h.includes('comunidad') || h.includes('barrio') || h.includes('sector')) mapaColumnas.comunidad = i;
+                    else if (h.includes('coordinador')) mapaColumnas.coordinador = i;
+                    else if (h.includes('participacion') || h.includes('participacion')) mapaColumnas.participacion = i;
+                });
+
+                for (let i = encabezadoIndex + 1; i < filas.length; i++) {
+                    const fila = filas[i];
+                    const todo = fila.join(' ');
+                    const cedula = extraerCedula(todo);
+                    if (!cedula) continue;
+
+                    const valor = clave => mapaColumnas[clave] !== undefined ? limpiarTextoPDF(fila[mapaColumnas[clave]]) : '';
+                    let nombre = valor('nombre');
+                    let telefono = valor('telefono');
+                    let corregimiento = valor('corregimiento');
+                    let comunidad = valor('comunidad');
+                    let coordinador = valor('coordinador');
+                    let participacion = valor('participacion');
+
+                    // Si alguna columna no se pudo ubicar, intenta encontrarla por contenido.
+                    if (!telefono) telefono = fila.find(esTelefono) || '';
+                    if (!participacion) participacion = detectarParticipacion(todo);
+                    if (!nombre) {
+                        const sinCedula = fila.filter(c => !extraerCedula(c) && !esTelefono(c));
+                        nombre = sinCedula[0] || `Dirigente ${registros.length + 1}`;
+                    }
+
+                    registros.push({
+                        nombre: nombre.toUpperCase(),
+                        cedula,
+                        telefono: normalizarTelefono(telefono),
+                        corregimiento: corregimiento || 'Centro',
+                        comunidad: comunidad || 'Comunidad General',
+                        coordinador: coordinador || 'General',
+                        participacion: participacion || 'Regular'
+                    });
+                }
+            }
+
+            // Respaldo: si el PDF no tiene encabezados claros, trabaja por cada cédula.
+            if (!registros.length) {
+                const regex = /\b\d{1,2}-\d{3,4}-\d{3,6}\b/g;
+                let match;
+                const cedulas = [];
+                while ((match = regex.exec(textoCompleto)) !== null) {
+                    if (!cedulas.some(c => c.cedula === match[0])) cedulas.push({ cedula: match[0], index: match.index });
+                }
+
+                cedulas.forEach((actual, i) => {
+                    const siguiente = i < cedulas.length - 1 ? cedulas[i + 1].index : textoCompleto.length;
+                    const fragmento = textoCompleto.substring(actual.index, siguiente);
+                    const telefonoMatch = fragmento.match(/\b(?:6\d{3}-?\d{4}|[2-9]\d{3}-\d{4})\b/);
+                    const telefono = telefonoMatch ? normalizarTelefono(telefonoMatch[0]) : '';
+                    const limpio = limpiarTextoPDF(fragmento.replace(actual.cedula, '').replace(telefono, ''));
+                    const partes = limpio.split(/\s+/).filter(p => p.length > 1);
+                    const nombre = partes.slice(0, Math.min(4, partes.length)).join(' ') || `Dirigente ${i + 1}`;
+
+                    registros.push({
+                        nombre: nombre.toUpperCase(),
+                        cedula: actual.cedula,
+                        telefono,
+                        corregimiento: 'Centro',
+                        comunidad: 'Comunidad General',
+                        coordinador: 'General',
+                        participacion: detectarParticipacion(fragmento)
+                    });
+                });
+            }
+
+            // Elimina duplicados y registros evidentemente inválidos.
+            const unicos = new Map();
+            registros.forEach(r => {
+                const key = normalizarCedula(r.cedula);
+                if (key && r.nombre) unicos.set(key, r);
+            });
+            return Array.from(unicos.values());
         }
 
         // Modales
@@ -799,19 +1012,23 @@
                 coordinador: document.getElementById('dir-coord').value,
                 participacion: document.getElementById('dir-part').value
             };
-            baseDeDatosDirigientes.push(nuevo);
+            baseDeDatosDirigentes.push(nuevo);
             guardarEnLocalStorage();
             actualizarTodo();
             cerrarModalDirigente();
             mostrarToast('Dirigente registrado con éxito');
         }
 
-        function abrirModalApoyo() { document.getElementById('modal-apoyo').style.display = 'flex'; }
+        function abrirModalApoyo() {
+            document.getElementById('input-fecha').value =
+                new Date().toISOString().slice(0, 10);
+            document.getElementById('modal-apoyo').style.display = 'flex';
+        }
         function cerrarModalApoyo() { document.getElementById('modal-apoyo').style.display = 'none'; }
         function guardarApoyo(e) {
             e.preventDefault();
             const cedula = document.getElementById('select-dirigente').value;
-            const diri = baseDeDatosDirigientes.find(d => d.cedula === cedula);
+            const diri = baseDeDatosDirigentes.find(d => d.cedula === cedula);
             const nuevo = {
                 dirigenteNombre: diri ? diri.nombre : cedula,
                 cedula: cedula,
@@ -869,7 +1086,7 @@
 
         function verConstancia(i) {
             const a = listaApoyos[i];
-            const d = baseDeDatosDirigientes.find(x => x.cedula === a.cedula) || {};
+            const d = baseDeDatosDirigentes.find(x => x.cedula === a.cedula) || {};
             document.getElementById('c-nombre').innerText = a.dirigenteNombre;
             document.getElementById('c-cedula').innerText = a.cedula;
             document.getElementById('c-tel').innerText = d.telefono || 'N/A';
@@ -904,12 +1121,15 @@
 
         function exportarCSV(tipo) {
             let csv = [];
+            const csvEscape = (valor) => `"${String(valor ?? '').replace(/"/g, '""')}"`;
             if(tipo === 'dirigientes') {
                 csv.push("Nombre,Cedula,Telefono,Corregimiento,Comunidad,Coordinador,Participacion");
-                baseDeDatosDirigientes.forEach(d => csv.push(`"${d.nombre}","${d.cedula}","${d.telefono}","${d.corregimiento}","${d.comunidad}","${d.coordinador}","${d.participacion}"`));
+                baseDeDatosDirigentes.forEach(d => csv.push(`"${d.nombre}","${d.cedula}","${d.telefono}","${d.corregimiento}","${d.comunidad}","${d.coordinador}","${d.participacion}"`));
             } else if(tipo === 'apoyos') {
                 csv.push("Dirigente,Cedula,Tipo,Descripcion,Monto,Fecha");
-                listaApoyos.forEach(a => csv.push(`"${a.dirigenteNombre}","${a.cedula}","${a.tipo}","${a.descripcion}","${a.monto}","${a.fecha}"`));
+                listaApoyos.forEach(a => csv.push([
+                    a.dirigenteNombre, a.cedula, a.tipo, a.descripcion, a.monto, a.fecha
+                ].map(csvEscape).join(',')));
             }
             let blob = new Blob([csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
             let link = document.createElement("a");
