@@ -1,0 +1,12 @@
+{
+  "name": "sistema-gestion-comunitaria",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Dirigientes Comunitarios",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
